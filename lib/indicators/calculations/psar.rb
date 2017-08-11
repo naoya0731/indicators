@@ -51,19 +51,85 @@
 
 module Indicators
   class Psar
-    # Input 
-    # Returns []
+    # Input: Price array of that period
+    # Returns: []
     def self.calculate data, parameters
-      output = Array.new
-      # initialize SAR
-      # subscription start
-      # new trade coming
-      #   define rising_faling_flag by diff
-      #   if condition rising_faling_flag
-      #   Use "+ Prior AF(Prior EP - Prior SAR)" or "- Prior AF(Prior SAR - Prior EP)"
+      iaf, maxaf = parameters[0], parameters[1]
+      length = data[:date].length
+      tail_index = length - 1
+      dates = data[:date]
+      high = data[:high]
+      low = data[:low]
+      close = data[:close]
+      
+      # "bull" swing its horn to above, then uptrend symbol, "bear" swing its nail to below, then downtrend symbol.
+      psar, psarbull, psarbear = Array.new(length), Array.new(length), Array.new(length)
+      psar[0], psarbull[0] = close.first, close.first
+      
+      bull = true
+      af = iaf
+      ep = low[0]
+      hp = high[0]
+      lp = low[0]
 
-      return output
+      for i in (1..tail_index)
+        reverse = false
+
+        # in bull trend, check psar is always lower than low
+        if bull
+          # monotonically increase
+          psar[i] = psar[i - 1] + af * (hp - psar[i - 1])
+          #p "bull: psar[#{i}] = psar[#{i - 1}] + af * (hp - psar[#{i - 1}]):  #{psar[i]} = #{psar[i - 1]} + #{af} * (#{hp} - #{psar[i - 1]})"
+
+          # "if reverse" flow
+          if low[i] < psar[i]
+            bull = !bull
+            reverse = true
+            psar[i] = lp
+            psarbear[i] = psar[i]
+            lp = low[i]
+            af = iaf
+            next
+          end
+
+          # normal flow
+          if not reverse
+
+            # update params
+            if high[i] > hp
+              hp = high[i]
+              af = [af + iaf, maxaf].min
+            end
+          end
+          psarbull[i] = psar[i]
+
+        # in bear trend, check psar is always higher than high
+        else
+          # monotonically decrease
+          psar[i] = psar[i - 1] - af * (psar[i - 1] - lp)
+          #p "bear: psar[#{i}] = psar[#{i - 1}] - af * (psar[#{i - 1}] - lp):  #{psar[i]} = #{psar[i - 1]} - #{af} * (#{psar[i - 1]} - #{lp})"
+          if high[i] > psar[i]
+            bull = !bull
+            reverse = true
+            psar[i] = hp
+            psarbull[i] = psar[i]
+            hp = high[i]
+            af = iaf
+            next
+          end
+          if not reverse
+            if low[i] < lp
+              lp = low[i]
+              af = [af + iaf, maxaf].min
+            end
+          end
+          psarbear[i] = psar[i]
+        end
+        # puts "i: #{i}, bull: #{bull}, reverse: #{reverse}, psar[i - 1]: #{psar[i - 1]}, psar[i]: #{psar[i]}, af: #{af}, hp: #{hp}, lp: #{lp}, ep: #{ep}"
+      end
+      return {"dates":dates, "high":high, "low":low, "close":close, "psar":psar, "psarbear":psarbear, "psarbull":psarbull}
     end
 
   end
 end
+

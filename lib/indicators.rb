@@ -1,6 +1,5 @@
 require 'active_support'
 require "indicators/version"
-require "securities"
 require "indicators/data.rb"
 require "indicators/parser.rb"
 require "indicators/main.rb"
@@ -16,6 +15,7 @@ require "indicators/calculations/macd.rb"
 # Leading Indicators
 require "indicators/calculations/rsi.rb"
 require "indicators/calculations/sto.rb"
+require "indicators/calculations/psar.rb"
 
 module Indicators
 end

@@ -2,7 +2,7 @@ module Indicators
 	class Data
 
 		attr_reader :data, :results
-		INDICATORS = [:sma, :ema, :bb, :macd, :rsi, :sto]
+		INDICATORS = [:sma, :ema, :bb, :macd, :rsi, :sto, :psar]
 		# Error handling
 		class DataException < StandardError ; end
 
